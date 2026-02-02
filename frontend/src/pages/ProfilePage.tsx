@@ -1,36 +1,24 @@
-import { Card, Text, Button } from '@mantine/core';
+import { Card, Title, Text, Badge, Stack } from '@mantine/core';
 import { useAuth } from '../auth/AuthContext';
-import { Link } from 'react-router-dom';
 
 export function ProfilePage() {
-  const { user, logout } = useAuth();
-
-  if (!user) return null;
+  const { user } = useAuth();
 
   return (
-    <Card maw={500} mx="auto" mt="xl" withBorder>
-      <Text fw={700} mb="sm">
+    <Card withBorder shadow="sm" mt="xl" p="lg">
+      <Title order={2} mb="md">
         Profile
-      </Text>
-      <Text>Email: {user.email}</Text>
-      <Text>Role: {user.role}</Text>
-      <Text>Created: {new Date(user.createdAt).toLocaleString()}</Text>
+      </Title>
 
-      <Button mt="md" onClick={logout}>
-        Logout
-      </Button>
+      <Stack>
+        <Text>
+          <b>Email:</b> {user?.email}
+        </Text>
 
-      {user.role === 'ADMIN' && (
-        <Button
-          mt="md"
-          ml="md"
-          variant="outline"
-          component={Link}
-          to="/admin/users"
-        >
-          Admin users
-        </Button>
-      )}
+        <Badge color={user?.role === 'ADMIN' ? 'red' : 'blue'} size="lg">
+          {user?.role}
+        </Badge>
+      </Stack>
     </Card>
   );
 }

@@ -1,53 +1,84 @@
 import { useState } from 'react';
-import { TextInput, PasswordInput, Button, Paper, Title } from '@mantine/core';
-import api from '../api';
+import {
+  Card,
+  TextInput,
+  PasswordInput,
+  Button,
+  Title,
+  Stack,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation() as any;
 
-  const handleSubmit = async () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      setError('');
-      const res = await api.post('/auth/login', { email, password });
-      await login(res.data.accessToken);
-      navigate('/profile');
-    } catch (e: any) {
-      setError(e.response?.data?.message ?? 'Login failed');
+      const me = await login(email, password);
+
+      if (!me) return;
+
+      if (me.role === 'ADMIN') {
+        navigate('/admin/users');
+      } else {
+        const from = location.state?.from?.pathname || '/profile';
+        navigate(from, { replace: true });
+      }
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'Login failed';
+
+      notifications.show({
+        color: 'red',
+        message: msg,
+      });
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <Paper maw={400} mx="auto" mt="xl" p="lg" withBorder>
-      <Title order={2} mb="md">
+    <Card withBorder shadow="sm" mt="xl" p="lg">
+      <Title order={2} mb="md" ta="center">
         Login
       </Title>
-      <TextInput
-        label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.currentTarget.value)}
-        mb="sm"
-      />
-      <PasswordInput
-        label="Password"
-        value={password}
-        onChange={(e) => setPassword(e.currentTarget.value)}
-        mb="sm"
-      />
-      {error && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>
-      )}
-      <Button fullWidth onClick={handleSubmit} mb="sm">
-        Sign in
-      </Button>
-      <div>
-        No account? <Link to="/register">Register</Link>
-      </div>
-    </Paper>
+
+      <form onSubmit={handleSubmit}>
+        <Stack>
+          <TextInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.currentTarget.value)}
+            required
+          />
+
+          <PasswordInput
+            label="Password"
+            placeholder="Your password"
+            value={password}
+            onChange={(e) => setPassword(e.currentTarget.value)}
+            required
+          />
+
+          <Button type="submit" loading={loading} fullWidth>
+            Login
+          </Button>
+        </Stack>
+      </form>
+    </Card>
   );
 }

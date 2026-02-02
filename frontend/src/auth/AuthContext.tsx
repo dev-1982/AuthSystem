@@ -1,11 +1,11 @@
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
-  ReactNode
+  useState,
+  ReactNode,
 } from 'react';
-import api from '../api';
+import { api } from '../api';
 
 type User = {
   id: string;
@@ -17,11 +17,11 @@ type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  login: (token: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User | null>;
   logout: () => void;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -29,10 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchMe() {
     try {
-      const res = await api.get('/users/me');
+      const res = await api.get<User>('/users/me');
       setUser(res.data);
+      return res.data;
     } catch {
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -40,20 +42,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (token) {
-      fetchMe();
-    } else {
-      setLoading(false);
-    }
+    if (token) fetchMe();
+    else setLoading(false);
   }, []);
 
-  const login = async (token: string) => {
+  const login = async (email: string, password: string) => {
+    const res = await api.post<{ accessToken: string }>('/auth/login', {
+      email,
+      password,
+    });
+
+    const token = res.data.accessToken;
     localStorage.setItem('accessToken', token);
-    await fetchMe();
+    api.defaults.headers.Authorization = `Bearer ${token}`;
+
+    return await fetchMe();
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    delete api.defaults.headers.Authorization;
     setUser(null);
   };
 

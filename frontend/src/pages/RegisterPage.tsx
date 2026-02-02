@@ -1,53 +1,79 @@
 import { useState } from 'react';
-import { TextInput, PasswordInput, Button, Paper, Title } from '@mantine/core';
-import api from '../api';
-import { useAuth } from '../auth/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import {
+  Card,
+  TextInput,
+  PasswordInput,
+  Button,
+  Title,
+  Stack,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../api';
 
 export function RegisterPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      setError('');
-      const res = await api.post('/auth/register', { email, password });
-      await login(res.data.accessToken);
-      navigate('/profile');
-    } catch (e: any) {
-      setError(e.response?.data?.message ?? 'Registration failed');
+      await api.post('/auth/register', { email, password });
+
+      notifications.show({
+        color: 'green',
+        message: 'Registration successful',
+      });
+
+      navigate('/login');
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'Registration failed';
+
+      notifications.show({
+        color: 'red',
+        message: msg,
+      });
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <Paper maw={400} mx="auto" mt="xl" p="lg" withBorder>
-      <Title order={2} mb="md">
+    <Card withBorder shadow="sm" mt="xl" p="lg">
+      <Title order={2} mb="md" ta="center">
         Register
       </Title>
-      <TextInput
-        label="Email"
-        value={email}
-        onChange={(e) => setEmail(e.currentTarget.value)}
-        mb="sm"
-      />
-      <PasswordInput
-        label="Password"
-        value={password}
-        onChange={(e) => setPassword(e.currentTarget.value)}
-        mb="sm"
-      />
-      {error && (
-        <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>
-      )}
-      <Button fullWidth onClick={handleSubmit} mb="sm">
-        Sign up
-      </Button>
-      <div>
-        Already have an account? <Link to="/login">Login</Link>
-      </div>
-    </Paper>
+
+      <form onSubmit={handleSubmit}>
+        <Stack>
+          <TextInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.currentTarget.value)}
+            required
+          />
+
+          <PasswordInput
+            label="Password"
+            placeholder="Your password"
+            value={password}
+            onChange={(e) => setPassword(e.currentTarget.value)}
+            required
+          />
+
+          <Button type="submit" loading={loading} fullWidth>
+            Register
+          </Button>
+        </Stack>
+      </form>
+    </Card>
   );
 }

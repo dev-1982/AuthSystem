@@ -1,142 +1,113 @@
 import { useEffect, useState } from 'react';
 import {
-  Table,
   Card,
-  Text,
+  Title,
   TextInput,
-  Group,
   Select,
-  Stack,
-  Pagination,
+  Group,
   Loader,
-  Center
+  Badge,
+  Table,
 } from '@mantine/core';
-import api from '../api';
+import { api } from '../api';
 
-type UserRow = {
+type User = {
   id: string;
   email: string;
-  role: string;
+  role: 'USER' | 'ADMIN';
   createdAt: string;
 };
 
-type UsersResponse = {
-  items: UserRow[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-};
-
 export function AdminUsersPage() {
-  const [users, setUsers] = useState<UserRow[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [sort, setSort] = useState<'new' | 'old'>('new');
 
-  const limit = 10;
-
-  useEffect(() => {
-  let cancelled = false;
-
-  async function load() {
+  async function loadUsers() {
     setLoading(true);
     try {
-      const res = await api.get<UsersResponse>('/users', {
-        params: {
-          search: search || undefined,
-          sort: sortDir,
-          page,
-          limit
-        }
-      });
-
-      if (!cancelled) {
-        setUsers(res.data.items);
-        setTotalPages(Math.max(res.data.totalPages ?? 1, 1));
-      }
+      const res = await api.get('/users');
+      setUsers(res.data.items ?? []);
     } finally {
-      if (!cancelled) setLoading(false);
+      setLoading(false);
     }
   }
 
-  load();
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
-  return () => {
-    cancelled = true;
-  };
-}, [search, sortDir, page]);
-
-
-  const rows = users.map((u) => (
-    <tr key={u.id}>
-      <td>{u.id}</td>
-      <td>{u.email}</td>
-      <td>{u.role}</td>
-      <td>{new Date(u.createdAt).toLocaleString()}</td>
-    </tr>
-  ));
+  const filtered = users
+    .filter(
+      (u) =>
+        u.email.toLowerCase().includes(search.toLowerCase()) ||
+        u.id.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) =>
+      sort === 'new'
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
 
   return (
-    <Card maw={900} mx="auto" mt="xl" withBorder>
-      <Group justify="space-between" mb="md">
-        <Text fw={700}>All users</Text>
-      </Group>
+    <Card withBorder shadow="sm" p="lg">
+      <Title order={2} mb="lg">
+        Users
+      </Title>
 
-      <Stack mb="md" gap="sm">
+      <Group grow mb="md">
         <TextInput
-          placeholder="Search by email or id"
+          label="Search by email or id"
+          placeholder="example@mail.com"
           value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.currentTarget.value);
-          }}
+          onChange={(e) => setSearch(e.currentTarget.value)}
         />
 
-        <Group gap="sm">
-          <Select
-            label="Sort by created date"
-            data={[
-              { value: 'desc', label: 'Newest first' },
-              { value: 'asc', label: 'Oldest first' }
-            ]}
-            value={sortDir}
-            onChange={(value) => {
-              if (value === 'asc' || value === 'desc') {
-                setSortDir(value);
-              } else {
-                setSortDir('desc');
-              }
-            }}
-            w={220}
-          />
-        </Group>
-      </Stack>
+        <Select
+          label="Sort by created date"
+          value={sort}
+          onChange={(v) => setSort((v as 'new' | 'old') ?? 'new')}
+          data={[
+            { value: 'new', label: 'Newest first' },
+            { value: 'old', label: 'Oldest first' },
+          ]}
+        />
+      </Group>
 
       {loading ? (
-        <Center py="lg">
-          <Loader />
-        </Center>
-      ) : (
-        <Table striped highlightOnHover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </Table>
-      )}
-
-      {totalPages > 1 && (
-        <Group justify="center" mt="md">
-          <Pagination value={page} onChange={setPage} total={totalPages} />
+        <Group justify="center" mt="xl">
+          <Loader size="lg" />
         </Group>
+      ) : filtered.length === 0 ? (
+        <Title order={5} c="dimmed" ta="center" mt="md">
+          Пользователи не найдены
+        </Title>
+      ) : (
+        <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>ID</Table.Th>
+              <Table.Th>Email</Table.Th>
+              <Table.Th>Role</Table.Th>
+              <Table.Th>Created</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {filtered.map((u) => (
+              <Table.Tr key={u.id}>
+                <Table.Td>{u.id}</Table.Td>
+                <Table.Td>{u.email}</Table.Td>
+                <Table.Td>
+                  <Badge color={u.role === 'ADMIN' ? 'red' : 'blue'}>
+                    {u.role}
+                  </Badge>
+                </Table.Td>
+                <Table.Td>{new Date(u.createdAt).toLocaleString()}</Table.Td>
+              </Table.Tr>
+            ))}
+          </Table.Tbody>
+        </Table>
       )}
     </Card>
   );
