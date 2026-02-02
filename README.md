@@ -179,9 +179,6 @@ VITE_API_BASE_URL=http://localhost:3000
 
 Роуты на фронте защищены через ProtectedRoute / RequireAuth
 
-Известные моменты разработки
-В процессе отладки фронта через Vite и Docker были забавные визуальные эффекты с chevron‑иконкой сортировки, которая однажды решила стать «главным героем экрана».
-
 Финальная версия использует аккуратные стили для Mantine Select / Combobox, чтобы chevron оставался в рамках приличий.
 
 TODO / Идеи для развития
@@ -194,3 +191,4 @@ TODO / Идеи для развития
 Пагинация и фильтры в /admin/users
 
 Тёмная/светлая тема
+<img width="1895" height="804" alt="Screenshot 2026-02-02 195354" src="https://github.com/user-attachments/assets/9ce53c5f-2f58-4b46-8f69-376a16fd10ec" />
