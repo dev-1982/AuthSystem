@@ -140,7 +140,7 @@ npm run dev
 
 Запуск через Docker
 bash
-npm install @mantine/notifications
+в парке фронта: npm install @mantine/notifications
 docker compose build
 docker compose up
 После этого:
