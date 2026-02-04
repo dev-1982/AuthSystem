@@ -193,6 +193,6 @@ TODO / Идеи для развития
 Тёмная/светлая тема
 <img width="1895" height="804" alt="Screenshot 2026-02-02 195354" src="https://github.com/user-attachments/assets/9ce53c5f-2f58-4b46-8f69-376a16fd10ec" />
 
-Добавлена пагинация на страница админа, по 5,10,50 юзеров
+Добавлена пагинация на странице админа, по 5,10,50 юзеров
 
 <img width="1889" height="816" alt="Screenshot 2026-02-04 092819" src="https://github.com/user-attachments/assets/83a79f18-aa39-4881-8321-6bf4415e6e50" />
