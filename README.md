@@ -140,6 +140,10 @@ npm run dev
 
 Запуск через Docker
 bash
+в парке фронта: 
+npm install @mantine/notifications
+npm install @tabler/icons-react
+в папке проекта:
 docker compose build
 docker compose up
 После этого:
